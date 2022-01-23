@@ -1,13 +1,13 @@
-import math
 import itertools
-import random
+import math
 from dataclasses import dataclass
 from typing import Callable
-from phil.deck import Rank, Suit, Card
 
+from phil.deck import Rank
 
 PRIMES = tuple(sorted(r.value for r in Rank))
 NUM_DISTINCT_HANDS = 7462
+
 
 def _straights():
     sorted_primes = (41,) + PRIMES
@@ -17,8 +17,9 @@ def _straights():
         order = tuple(cards[::-1])
         code = math.prod(cards)
         table[code] = order
-    
+
     return sorted(table, key=table.get, reverse=True)
+
 
 def _four_of_a_kind():
     primes_set = set(PRIMES)
@@ -29,8 +30,9 @@ def _four_of_a_kind():
             code = p ** 4 * k
             order = (p, k)
             table[code] = order
-    
+
     return sorted(table, key=table.get, reverse=True)
+
 
 def _full_house():
     primes_set = set(PRIMES)
@@ -41,8 +43,9 @@ def _full_house():
             code = p ** 3 * k ** 2
             order = (p, k)
             table[code] = order
-    
+
     return sorted(table, key=table.get, reverse=True)
+
 
 def _three_of_a_kind():
     primes_set = set(PRIMES)
@@ -53,8 +56,9 @@ def _three_of_a_kind():
         for k1, k2 in combs:
             # prime product: (base, high kick, low kick)
             table[p ** 3 * k1 * k2] = (p, max(k1, k2), min(k1, k2))
-    
+
     return sorted(table, key=table.get, reverse=True)
+
 
 def _two_pair():
     primes_set = set(PRIMES)
@@ -63,9 +67,10 @@ def _two_pair():
         kickers = primes_set.difference((p1, p2))
         for k in kickers:
             # prime product: (high pair, low_pair, kicker)
-            table[p1 ** 2 * p2 **2 * k] = (max(p1, p2), min(p1, p2), k)
-    
+            table[p1 ** 2 * p2 ** 2 * k] = (max(p1, p2), min(p1, p2), k)
+
     return sorted(table, key=table.get, reverse=True)
+
 
 def _one_pair():
     primes_set = set(PRIMES)
@@ -77,8 +82,9 @@ def _one_pair():
             order = (p, *sorted(ks, reverse=True))
             # prime product: (pair, high kick, mid kick, low kick)
             table[code] = order
-    
+
     return sorted(table, key=table.get, reverse=True)
+
 
 def _high_card():
     primes_set = set(PRIMES)
@@ -91,9 +97,9 @@ def _high_card():
 
         order = tuple(sorted(ks, reverse=True))
         table[code] = order
-    
+
     return sorted(table, key=table.get, reverse=True)
-    
+
 
 @dataclass
 class NamedHand:
@@ -108,24 +114,24 @@ class NamedHand:
     def __post_init__(self):
         self.num_distinct = len(self.codes)
         self.num_unique = self.num_distinct * self.multiplicity
-    
+
     @property
     def probability(self):
         return self.num_unique / NUM_DISTINCT_HANDS
-    
+
     def __contains__(self, encoding):
         suited, prime_prod = encoding
         return (suited == self.is_suited) and (prime_prod in self.codes)
-    
+
     def index(self, value):
         return self.codes.index(value)
-    
+
     def __str__(self):
         return self.name.replace("_", " ").title()
-    
+
     def __repr__(self):
         return f"<{self.name}>"
-    
+
     def simulate(self):
         raise NotImplementedError
 
@@ -136,7 +142,7 @@ class Table:
     ------------------------------------------------
     Straight flush        10        (   1 -   10)
     Four of a kind       156        (  11 -  166)    
-    Full hous e          156        ( 167 -  322)     
+    Full house           156        ( 167 -  322)
     Flush               1277        ( 323 - 1599) 
     Straight              10        (1600 - 1609)
     Three of a kind      858        (1610 - 2467) 
@@ -153,7 +159,7 @@ class Table:
     TWO_PAIR        = NamedHand("two_pair",               _two_pair(), False, 2468, 3325,  144)
     ONE_PAIR        = NamedHand("one_pair",               _one_pair(), False, 3326, 6185,  384)
     HIGH_CARD       = NamedHand("high_card",             _high_card(), False, 6186, 7462, 1020)
-    
+
     _OPTIONS = (
         STRAIGHT_FLUSH,
         FOUR_OF_A_KIND,
@@ -172,7 +178,7 @@ class Table:
             for option in self._OPTIONS
             for code in option.codes
         }
-    
+
     def __getitem__(self, index):
         return self._lookup[index]
 
@@ -180,7 +186,7 @@ class Table:
         return min(self._lookup[self.encode(hand_5)] for hand_5 in itertools.combinations(hand, 5))
 
     def encode(self, hand):
-        return (self.is_suited(hand), math.prod(card.rank.value for card in hand))
-    
+        return self.is_suited(hand), math.prod(card.rank.value for card in hand)
+
     def is_suited(self, hand):
         return len(set(card.suit.value for card in hand)) == 1
