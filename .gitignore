@@ -1,0 +1,6 @@
+.python-version
+**/__pycache__
+.DS_Store
+.vscode/
+*.egg-info/
+.pytest_cache
