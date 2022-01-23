@@ -167,25 +167,18 @@ class Table:
     )
 
     def __init__(self):
-        self.lookup = {
+        self._lookup = {
             (option.is_suited, code): option.max_ranking + option.index(code)
             for option in self._OPTIONS
             for code in option.codes
         }
     
     def __getitem__(self, index):
-        return self.lookup[index]
+        return self._lookup[index]
 
-    def _lookup(self, hand):
-        encoding = self.encode(hand)
-        for named_hand in self._OPTIONS:
-            if encoding in named_hand:
-                _, prod = encoding
-                ranking = named_hand.max_ranking + named_hand.index(prod)
-                return ranking, named_hand
+    def lookup(self, hand):
+        return min(self._lookup[self.encode(hand_5)] for hand_5 in itertools.combinations(hand, 5))
 
-        raise LookupError
-    
     def encode(self, hand):
         return (self.is_suited(hand), math.prod(card.rank.value for card in hand))
     
