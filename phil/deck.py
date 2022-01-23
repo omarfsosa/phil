@@ -1,8 +1,8 @@
 import enum
 import itertools
+import math
 import random
 from typing import NamedTuple
-
 
 # Consider moving these to a constants.py file
 # Ranks
@@ -30,7 +30,7 @@ class Suit(enum.Enum):
 
     def __str__(self):
         return _INT_TO_SYM[self.value]
-    
+
     @classmethod
     def from_string(cls, s):
         return cls(_STR_TO_INT[s.upper()])
@@ -54,10 +54,10 @@ class Rank(enum.Enum):
     QUEEN = 31
     KING = 37
     ACE = 41
-    
+
     def __str__(self):
         return _PRIME_TO_STR[self.value]
-    
+
     @classmethod
     def from_string(cls, r):
         return cls(_STR_TO_PRIME[r.upper()])
@@ -69,17 +69,16 @@ class Card(NamedTuple):
 
     def __str__(self):
         return f"{self.rank!s}{self.suit!s}"
-    
+
     def __repr__(self):
         return f"{self.rank!s}{self.suit!s}"
-    
+
     @classmethod
     def from_string(cls, rs):
         rs = rs.upper()
         rank = Rank.from_string(rs[:-1])
         suit = Suit.from_string(rs[-1])
         return cls(rank, suit)
-
 
 
 class Deck:
@@ -89,7 +88,7 @@ class Deck:
         else:
             self._reset()
             self.shuffle()
-            
+
     def _reset(self):
         """
         Return all cards to the deck, in order.
@@ -101,26 +100,49 @@ class Deck:
         Shuffle all cards (in place)
         """
         random.shuffle(self.cards)
-    
+
     def __len__(self):
         return len(self.cards)
-    
+
     def __getitem__(self, index):
         return self.cards[index]
-    
+
     def __iter__(self):
         return iter(self.cards)
-    
+
     def show(self, n=None):
         top = list(reversed(self))
         print(", ".join(str(card) for card in top[:n]))
-    
+
     def draw(self, n=1):
         if n == 1:
-            return self.cards.pop()        
-        
+            return self.cards.pop()
+
         return [self.cards.pop() for _ in range(n)]
-    
+
     def remove(self, *cards):
         for card in cards:
             self.cards.remove(card)
+
+
+class Hand:
+    def __init__(self, cards):
+        self.cards = list(cards)
+
+    @classmethod
+    def from_strings(cls, *strings):
+        return cls(Card.from_string(s) for s in strings)
+
+    @classmethod
+    def from_string(cls, s):
+        return cls.from_strings(*s.split())
+
+    def __repr__(self):
+        return f"Hand({str(self.cards)[1:-1]})"
+
+    def __eq__(self, other):
+        return set(self.cards) == set(other.cards)
+
+    @property
+    def code(self):
+        return math.prod(card.rank.value for card in self.cards)
