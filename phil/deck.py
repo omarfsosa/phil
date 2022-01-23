@@ -1,9 +1,10 @@
 import enum
 import itertools
 import random
-from dataclasses import dataclass
+from typing import NamedTuple
 
 
+# Consider moving these to a constants.py file
 # Ranks
 _PRIME_RANKS = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41)
 _STR_RANKS = list("23456789") + ["10", "J", "Q", "K", "A"]
@@ -19,6 +20,7 @@ _STR_SUITS = list("HDSC")
 _SYM_SUITS = [_HEART_SYMBOL, _DIAMOND_SYMBOL, _SPADE_SYMBOL, _CLUB_SYMBOL]
 _INT_TO_SYM = dict(zip(range(4), _SYM_SUITS))
 _STR_TO_INT = dict(zip(_STR_SUITS, range(4)))
+
 
 class Suit(enum.Enum):
     HEARTS = 0
@@ -61,8 +63,7 @@ class Rank(enum.Enum):
         return cls(_STR_TO_PRIME[r.upper()])
 
 
-@dataclass
-class Card:
+class Card(NamedTuple):
     rank: Rank
     suit: Suit
 
@@ -123,13 +124,3 @@ class Deck:
     def remove(self, *cards):
         for card in cards:
             self.cards.remove(card)
-
-if __name__ == "__main__":
-    r = Rank.ACE
-    s = Suit.DIAMONDS
-    c = Card(rank=Rank.TWO, suit=Suit.SPADES)
-    d = Deck()
-    hand = d.draw(5)
-    print(hand)
-    colors = set(card.suit for card in hand)
-    print(colors)

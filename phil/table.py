@@ -30,7 +30,7 @@ def _four_of_a_kind():
             order = (p, k)
             table[code] = order
     
-    return sorted(table, key=table.get)
+    return sorted(table, key=table.get, reverse=True)
 
 def _full_house():
     primes_set = set(PRIMES)
