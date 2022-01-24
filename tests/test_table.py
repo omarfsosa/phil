@@ -5,16 +5,6 @@ from phil.table import LookupTable
 
 
 @pytest.fixture
-def royal_flush():
-    return Hand.from_string("ah kh qh jh th")
-
-
-@pytest.fixture
-def seven_high():
-    return Hand.from_string("2s 3h 4c 5d 7h")
-
-
-@pytest.fixture
 def table():
     return LookupTable()
 
