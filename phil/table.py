@@ -3,7 +3,7 @@ import math
 import operator
 from functools import reduce, singledispatchmethod
 
-from phil.deck import RANKS_PRM, _SUIT_FACTOR, Hand
+from phil.deck import _SUIT_FACTOR, RANKS_PRM, Hand
 
 
 def _straights(suited=False):
@@ -107,17 +107,17 @@ class NamedHand:
         self.multiplicity = multiplicity
         self.num_distinct = len(self.codes)
         self.num_unique = self.num_distinct * self.multiplicity
-    
+
     @property
     def suited(self):
-        return not (codes[0] % _SUIT_FACTOR)
-    
+        return not (self.codes[0] % _SUIT_FACTOR)
+
     def index(self, value):
         return self.codes.index(value)
-    
+
     def __repr__(self):
         return f"<NamedHand({self.name})>"
-    
+
 
 class LookupTable:
     """
@@ -165,16 +165,16 @@ class LookupTable:
 
     def __getitem__(self, index):
         return self._table[index]
-    
+
     @singledispatchmethod
     def find(self, arg):
         raise NotImplementedError("Cannot find a ")
-        
+
     @find.register
     def _(self, hand: Hand):
         code = hand.encode()
         return self[code]
-    
+
     @find.register
     def _(self, cards: list):
         prime_product = math.prod(card.rank_prm for card in cards)

@@ -6,8 +6,8 @@ import math
 import operator
 import random
 from collections import UserList
-from itertools import product
 from functools import reduce
+from itertools import product
 from numbers import Integral
 
 # RANKS
