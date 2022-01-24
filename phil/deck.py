@@ -3,9 +3,11 @@ Work in progress.
 Card as an integer
 """
 import math
+import operator
 import random
 from collections import UserList
 from itertools import product
+from functools import reduce
 from numbers import Integral
 
 # RANKS
@@ -16,6 +18,7 @@ RANKS_PRM = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41)
 SUITS_STR = "XCDXHXXXS"  # X: not used
 SUITS_BIN = (1, 2, 4, 8)
 SUITS_SYM = "X\u2667\u2662X\u2661XXX\u2664"  # unicode symbols, X not used.
+_SUIT_FACTOR = 43
 
 
 class Card(int):
@@ -114,6 +117,10 @@ class Hand:
     def __eq__(self, other):
         return set(self.cards) == set(other.cards)
 
+    def encode(self):
+        prime_product = math.prod(card.rank_prm for card in self.cards)
+        return prime_product * (_SUIT_FACTOR if self.suited else 1)
+
     @property
-    def code(self):
-        return math.prod(card.rank_prm for card in self.cards)
+    def suited(self):
+        return bool(reduce(operator.and_, self.cards) & 0xF000)

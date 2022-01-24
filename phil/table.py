@@ -1,28 +1,25 @@
 import itertools
 import math
-from dataclasses import dataclass
-from typing import Callable
+import operator
+from functools import reduce, singledispatchmethod
 
-from phil.deck import Rank
-
-PRIMES = tuple(sorted(r.value for r in Rank))
-NUM_DISTINCT_HANDS = 7462
+from phil.deck import RANKS_PRM, _SUIT_FACTOR, Hand
 
 
-def _straights():
-    sorted_primes = (41,) + PRIMES
+def _straights(suited=False):
+    sorted_primes = (41,) + RANKS_PRM
     table = {}
     for n in range(10):
         cards = sorted_primes[n : n + 5]
         order = tuple(cards[::-1])
-        code = math.prod(cards)
+        code = math.prod(cards) * (_SUIT_FACTOR if suited else 1)
         table[code] = order
 
     return sorted(table, key=table.get, reverse=True)
 
 
 def _four_of_a_kind():
-    primes_set = set(PRIMES)
+    primes_set = set(RANKS_PRM)
     table = {}
     for p in primes_set:
         kickers = primes_set.difference((p,))
@@ -35,7 +32,7 @@ def _four_of_a_kind():
 
 
 def _full_house():
-    primes_set = set(PRIMES)
+    primes_set = set(RANKS_PRM)
     table = {}
     for p in primes_set:
         kickers = primes_set.difference((p,))
@@ -48,7 +45,7 @@ def _full_house():
 
 
 def _three_of_a_kind():
-    primes_set = set(PRIMES)
+    primes_set = set(RANKS_PRM)
     table = {}
     for p in primes_set:
         kickers = primes_set.difference((p,))
@@ -61,7 +58,7 @@ def _three_of_a_kind():
 
 
 def _two_pair():
-    primes_set = set(PRIMES)
+    primes_set = set(RANKS_PRM)
     table = {}
     for p1, p2 in itertools.combinations(primes_set, 2):
         kickers = primes_set.difference((p1, p2))
@@ -73,7 +70,7 @@ def _two_pair():
 
 
 def _one_pair():
-    primes_set = set(PRIMES)
+    primes_set = set(RANKS_PRM)
     table = {}
     for p in primes_set:
         kickers = primes_set.difference((p,))
@@ -86,8 +83,8 @@ def _one_pair():
     return sorted(table, key=table.get, reverse=True)
 
 
-def _high_card():
-    primes_set = set(PRIMES)
+def _high_card(suited=False):
+    primes_set = set(RANKS_PRM)
     straights = _straights()
     table = {}
     for ks in itertools.combinations(primes_set, 5):
@@ -95,48 +92,34 @@ def _high_card():
         if code in straights:
             continue
 
+        code *= _SUIT_FACTOR if suited else 1
         order = tuple(sorted(ks, reverse=True))
         table[code] = order
 
     return sorted(table, key=table.get, reverse=True)
 
 
-@dataclass
 class NamedHand:
-    name: str
-    codes: list
-    is_suited: bool
-    max_ranking: int
-    min_ranking: int
-    multiplicity: int
-    simulate: Callable = None
-
-    def __post_init__(self):
+    def __init__(self, name, codes, top_ranking, multiplicity):
+        self.name = name
+        self.codes = codes
+        self.top_ranking = top_ranking
+        self.multiplicity = multiplicity
         self.num_distinct = len(self.codes)
         self.num_unique = self.num_distinct * self.multiplicity
-
+    
     @property
-    def probability(self):
-        return self.num_unique / NUM_DISTINCT_HANDS
-
-    def __contains__(self, encoding):
-        suited, prime_prod = encoding
-        return (suited == self.is_suited) and (prime_prod in self.codes)
-
+    def suited(self):
+        return not (codes[0] % _SUIT_FACTOR)
+    
     def index(self, value):
         return self.codes.index(value)
-
-    def __str__(self):
-        return self.name.replace("_", " ").title()
-
+    
     def __repr__(self):
-        return f"<{self.name}>"
+        return f"<NamedHand({self.name})>"
+    
 
-    def simulate(self):
-        raise NotImplementedError
-
-
-class Table:
+class LookupTable:
     """
     Hand name     | Num distinct | Ranking interval
     ------------------------------------------------
@@ -151,19 +134,17 @@ class Table:
     High card           1277        (6186 - 7462)
     """
 
-    STRAIGHT_FLUSH = NamedHand("straight_flush", _straights(), True, 1, 10, 4)
-    FOUR_OF_A_KIND = NamedHand("four_of_a_kind", _four_of_a_kind(), False, 11, 166, 4)
-    FULL_HOUSE = NamedHand("full_house", _full_house(), False, 167, 322, 24)
-    FLUSH = NamedHand("flush", _high_card(), True, 323, 1599, 4)
-    STRAIGHT = NamedHand("straight", _straights(), False, 1600, 1609, 1020)
-    THREE_OF_A_KIND = NamedHand(
-        "three_of_a_kind", _three_of_a_kind(), False, 1610, 2467, 64
-    )
-    TWO_PAIR = NamedHand("two_pair", _two_pair(), False, 2468, 3325, 144)
-    ONE_PAIR = NamedHand("one_pair", _one_pair(), False, 3326, 6185, 384)
-    HIGH_CARD = NamedHand("high_card", _high_card(), False, 6186, 7462, 1020)
+    STRAIGHT_FLUSH = NamedHand("SF", _straights(True), 1, 4)
+    FOUR_OF_A_KIND = NamedHand("FK", _four_of_a_kind(), 11, 4)
+    FULL_HOUSE = NamedHand("FH", _full_house(), 167, 24)
+    FLUSH = NamedHand("FL", _high_card(True), 323, 4)
+    STRAIGHT = NamedHand("ST", _straights(), 1600, 1020)
+    THREE_OF_A_KIND = NamedHand("TK", _three_of_a_kind(), 1610, 64)
+    TWO_PAIR = NamedHand("TP", _two_pair(), 2468, 144)
+    ONE_PAIR = NamedHand("OP", _one_pair(), 3326, 384)
+    HIGH_CARD = NamedHand("HC", _high_card(), 6186, 1020)
 
-    _OPTIONS = (
+    NAMED_HANDS = (
         STRAIGHT_FLUSH,
         FOUR_OF_A_KIND,
         FULL_HOUSE,
@@ -176,23 +157,31 @@ class Table:
     )
 
     def __init__(self):
-        self._lookup = {
-            (option.is_suited, code): option.max_ranking + option.index(code)
-            for option in self._OPTIONS
-            for code in option.codes
+        self._table = {
+            code: named.top_ranking + named.index(code)
+            for named in self.NAMED_HANDS
+            for code in named.codes
         }
 
     def __getitem__(self, index):
-        return self._lookup[index]
+        return self._table[index]
+    
+    @singledispatchmethod
+    def find(self, arg):
+        raise NotImplementedError("Cannot find a ")
+        
+    @find.register
+    def _(self, hand: Hand):
+        code = hand.encode()
+        return self[code]
+    
+    @find.register
+    def _(self, cards: list):
+        prime_product = math.prod(card.rank_prm for card in cards)
+        suited = bool(reduce(operator.and_, cards) & 0xF000)
+        code = prime_product * (_SUIT_FACTOR if suited else 1)
+        return self[code]
 
-    def lookup(self, hand):
-        return min(
-            self._lookup[self.encode(hand_5)]
-            for hand_5 in itertools.combinations(hand, 5)
-        )
-
-    def encode(self, hand):
-        return self.is_suited(hand), math.prod(card.rank.value for card in hand)
-
-    def is_suited(self, hand):
-        return len(set(card.suit.value for card in hand)) == 1
+    @find.register
+    def _(self, code: int):
+        return self[code]
