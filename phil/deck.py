@@ -1,128 +1,99 @@
-import enum
-import itertools
+"""
+Work in progress.
+Card as an integer
+"""
 import math
 import random
-from typing import NamedTuple
+from collections import UserList
+from itertools import product
+from numbers import Integral
 
-# Consider moving these to a constants.py file
-# Ranks
-_PRIME_RANKS = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41)
-_STR_RANKS = list("23456789") + ["10", "J", "Q", "K", "A"]
-_STR_TO_PRIME = dict(zip(_STR_RANKS, _PRIME_RANKS))
-_PRIME_TO_STR = dict(zip(_PRIME_RANKS, _STR_RANKS))
+# RANKS
+RANKS_STR = "23456789TJQKA"
+RANKS_PRM = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41)
 
-# Suits
-_HEART_SYMBOL = u"\u2661"
-_DIAMOND_SYMBOL = u"\u2662"
-_SPADE_SYMBOL = u"\u2664"
-_CLUB_SYMBOL = u"\u2667"
-_STR_SUITS = list("HDSC")
-_SYM_SUITS = [_HEART_SYMBOL, _DIAMOND_SYMBOL, _SPADE_SYMBOL, _CLUB_SYMBOL]
-_INT_TO_SYM = dict(zip(range(4), _SYM_SUITS))
-_STR_TO_INT = dict(zip(_STR_SUITS, range(4)))
+# SUITS
+SUITS_STR = "XCDXHXXXS" # X: not used
+SUITS_BIN = (1, 2, 4, 8)
+SUITS_SYM = u"X\u2667\u2662X\u2661XXX\u2664" # unicode symbols, X not used.
 
 
-class Suit(enum.Enum):
-    HEARTS = 0
-    DIAMONDS = 1
-    SPADES = 2
-    CLUBS = 3
-
+class Card(int):
+    def __new__(cls, value):
+        if isinstance(value, str):
+            rank_str = value[0]
+            suit_str = value[1]
+            rank_int = RANKS_STR.index(rank_str.upper())
+            suit_int = SUITS_STR.index(suit_str.upper())
+            rank_prm = RANKS_PRM[rank_int]
+            bitrank = 1 << rank_int << 16
+            suit = suit_int << 12
+            rank = rank_int << 8
+            return cls(bitrank | suit | rank | rank_prm)
+        elif isinstance(value, Integral):
+            return int.__new__(cls, value)
+    
     def __str__(self):
-        return _INT_TO_SYM[self.value]
-
-    @classmethod
-    def from_string(cls, s):
-        return cls(_STR_TO_INT[s.upper()])
-
-
-class Rank(enum.Enum):
-    """
-    Enumerate with prime numbers for fast hand evaluation.
-    http://suffe.cool/poker/evaluator.html
-    """
-    TWO = 2
-    THREE = 3
-    FOUR = 5
-    FIVE = 7
-    SIX = 11
-    SEVEN = 13
-    EIGHT = 17
-    NINE = 19
-    TEN = 23
-    JACK = 29
-    QUEEN = 31
-    KING = 37
-    ACE = 41
-
-    def __str__(self):
-        return _PRIME_TO_STR[self.value]
-
-    @classmethod
-    def from_string(cls, r):
-        return cls(_STR_TO_PRIME[r.upper()])
-
-
-class Card(NamedTuple):
-    rank: Rank
-    suit: Suit
-
-    def __str__(self):
-        return f"{self.rank!s}{self.suit!s}"
-
+        return RANKS_STR[self.rank] + SUITS_SYM[self.suit]
+    
     def __repr__(self):
-        return f"{self.rank!s}{self.suit!s}"
+        return RANKS_STR[self.rank] + SUITS_SYM[self.suit]
+    
+    @property
+    def rank(self):
+        return (self & 0xF00) >> 8
+    
+    @property
+    def suit(self):
+        return (self & 0xF000) >> 12
+    
+    @property
+    def rank_prm(self):
+        return (self & 0xFF)
+    
+    @property
+    def bitrank(self):
+        return (self & 0xFFFF0000) >> 16
+    
+    def as_bits(self):
+        """
+        For debugging purposes only.
+        """
+        b = format(self, "032b")
+        bitrank, suit, rank, prime = b[:16], b[16:20], b[20:24], b[24:]
+        return f"{bitrank}-{suit}-{rank}-{prime}"
 
-    @classmethod
-    def from_string(cls, rs):
-        rs = rs.upper()
-        rank = Rank.from_string(rs[:-1])
-        suit = Suit.from_string(rs[-1])
-        return cls(rank, suit)
-
-
-class Deck:
+class Deck(UserList):
     def __init__(self, cards=None):
-        if cards is not None:
-            self.cards = list(cards)
-        else:
-            self._reset()
-            self.shuffle()
+        if cards is None:
+            cards = self._generate_full_deck()
 
-    def _reset(self):
-        """
-        Return all cards to the deck, in order.
-        """
-        self.cards = [Card(r, s) for r, s in itertools.product(Rank, Suit)]
-
-    def shuffle(self):
-        """
-        Shuffle all cards (in place)
-        """
-        random.shuffle(self.cards)
-
-    def __len__(self):
-        return len(self.cards)
-
-    def __getitem__(self, index):
-        return self.cards[index]
-
-    def __iter__(self):
-        return iter(self.cards)
-
-    def show(self, n=None):
-        top = list(reversed(self))
-        print(", ".join(str(card) for card in top[:n]))
-
+        super().__init__(cards)
+        
+    
+    @staticmethod
+    def _generate_full_deck(shuffle=True):
+        ranks = RANKS_STR
+        suits = SUITS_STR.replace("X", "")
+        cards = [Card(r + s) for r, s in product(ranks, suits)]
+        if shuffle:
+            random.shuffle(cards)
+        
+        return cards
+    
     def draw(self, n=1):
-        if n == 1:
-            return self.cards.pop()
-
-        return [self.cards.pop() for _ in range(n)]
-
-    def remove(self, *cards):
-        for card in cards:
-            self.cards.remove(card)
+        """
+        Take the top `n` cards.
+        """
+        return [self.pop() for _ in range(n)]
+    
+    def get(self, card):
+        """
+        Take a specific card out of the deck
+        and return it.
+        """
+        card = Card(card)
+        return self.pop(self.index(card))
 
 
 class Hand:
@@ -131,7 +102,7 @@ class Hand:
 
     @classmethod
     def from_strings(cls, *strings):
-        return cls(Card.from_string(s) for s in strings)
+        return cls(Card(s) for s in strings)
 
     @classmethod
     def from_string(cls, s):
@@ -145,4 +116,4 @@ class Hand:
 
     @property
     def code(self):
-        return math.prod(card.rank.value for card in self.cards)
+        return math.prod(card.rank_prm for card in self.cards)
