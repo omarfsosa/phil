@@ -13,9 +13,9 @@ RANKS_STR = "23456789TJQKA"
 RANKS_PRM = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41)
 
 # SUITS
-SUITS_STR = "XCDXHXXXS" # X: not used
+SUITS_STR = "XCDXHXXXS"  # X: not used
 SUITS_BIN = (1, 2, 4, 8)
-SUITS_SYM = u"X\u2667\u2662X\u2661XXX\u2664" # unicode symbols, X not used.
+SUITS_SYM = "X\u2667\u2662X\u2661XXX\u2664"  # unicode symbols, X not used.
 
 
 class Card(int):
@@ -32,29 +32,29 @@ class Card(int):
             return cls(bitrank | suit | rank | rank_prm)
         elif isinstance(value, Integral):
             return int.__new__(cls, value)
-    
+
     def __str__(self):
         return RANKS_STR[self.rank] + SUITS_SYM[self.suit]
-    
+
     def __repr__(self):
         return RANKS_STR[self.rank] + SUITS_SYM[self.suit]
-    
+
     @property
     def rank(self):
         return (self & 0xF00) >> 8
-    
+
     @property
     def suit(self):
         return (self & 0xF000) >> 12
-    
+
     @property
     def rank_prm(self):
-        return (self & 0xFF)
-    
+        return self & 0xFF
+
     @property
     def bitrank(self):
         return (self & 0xFFFF0000) >> 16
-    
+
     def as_bits(self):
         """
         For debugging purposes only.
@@ -63,14 +63,14 @@ class Card(int):
         bitrank, suit, rank, prime = b[:16], b[16:20], b[20:24], b[24:]
         return f"{bitrank}-{suit}-{rank}-{prime}"
 
+
 class Deck(UserList):
     def __init__(self, cards=None):
         if cards is None:
             cards = self._generate_full_deck()
 
         super().__init__(cards)
-        
-    
+
     @staticmethod
     def _generate_full_deck(shuffle=True):
         ranks = RANKS_STR
@@ -78,15 +78,15 @@ class Deck(UserList):
         cards = [Card(r + s) for r, s in product(ranks, suits)]
         if shuffle:
             random.shuffle(cards)
-        
+
         return cards
-    
+
     def draw(self, n=1):
         """
         Take the top `n` cards.
         """
         return [self.pop() for _ in range(n)]
-    
+
     def get(self, card):
         """
         Take a specific card out of the deck

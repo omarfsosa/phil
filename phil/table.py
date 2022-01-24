@@ -13,7 +13,7 @@ def _straights():
     sorted_primes = (41,) + PRIMES
     table = {}
     for n in range(10):
-        cards = sorted_primes[n: n + 5]
+        cards = sorted_primes[n : n + 5]
         order = tuple(cards[::-1])
         code = math.prod(cards)
         table[code] = order
@@ -141,24 +141,27 @@ class Table:
     Hand name     | Num distinct | Ranking interval
     ------------------------------------------------
     Straight flush        10        (   1 -   10)
-    Four of a kind       156        (  11 -  166)    
+    Four of a kind       156        (  11 -  166)
     Full house           156        ( 167 -  322)
-    Flush               1277        ( 323 - 1599) 
+    Flush               1277        ( 323 - 1599)
     Straight              10        (1600 - 1609)
-    Three of a kind      858        (1610 - 2467) 
+    Three of a kind      858        (1610 - 2467)
     Two pair             858        (2468 - 3325)
     One pair            2860        (3326 - 6185)
-    High card           1277        (6186 - 7462)  
+    High card           1277        (6186 - 7462)
     """
-    STRAIGHT_FLUSH  = NamedHand("straight_flush",        _straights(),  True,    1,   10,    4)
-    FOUR_OF_A_KIND  = NamedHand("four_of_a_kind",   _four_of_a_kind(), False,   11,  166,    4)
-    FULL_HOUSE      = NamedHand("full_house",           _full_house(), False,  167,  322,   24)
-    FLUSH           = NamedHand("flush",                 _high_card(),  True,  323, 1599,    4)
-    STRAIGHT        = NamedHand("straight",              _straights(), False, 1600, 1609, 1020)
-    THREE_OF_A_KIND = NamedHand("three_of_a_kind", _three_of_a_kind(), False, 1610, 2467,   64)
-    TWO_PAIR        = NamedHand("two_pair",               _two_pair(), False, 2468, 3325,  144)
-    ONE_PAIR        = NamedHand("one_pair",               _one_pair(), False, 3326, 6185,  384)
-    HIGH_CARD       = NamedHand("high_card",             _high_card(), False, 6186, 7462, 1020)
+
+    STRAIGHT_FLUSH = NamedHand("straight_flush", _straights(), True, 1, 10, 4)
+    FOUR_OF_A_KIND = NamedHand("four_of_a_kind", _four_of_a_kind(), False, 11, 166, 4)
+    FULL_HOUSE = NamedHand("full_house", _full_house(), False, 167, 322, 24)
+    FLUSH = NamedHand("flush", _high_card(), True, 323, 1599, 4)
+    STRAIGHT = NamedHand("straight", _straights(), False, 1600, 1609, 1020)
+    THREE_OF_A_KIND = NamedHand(
+        "three_of_a_kind", _three_of_a_kind(), False, 1610, 2467, 64
+    )
+    TWO_PAIR = NamedHand("two_pair", _two_pair(), False, 2468, 3325, 144)
+    ONE_PAIR = NamedHand("one_pair", _one_pair(), False, 3326, 6185, 384)
+    HIGH_CARD = NamedHand("high_card", _high_card(), False, 6186, 7462, 1020)
 
     _OPTIONS = (
         STRAIGHT_FLUSH,
@@ -183,7 +186,10 @@ class Table:
         return self._lookup[index]
 
     def lookup(self, hand):
-        return min(self._lookup[self.encode(hand_5)] for hand_5 in itertools.combinations(hand, 5))
+        return min(
+            self._lookup[self.encode(hand_5)]
+            for hand_5 in itertools.combinations(hand, 5)
+        )
 
     def encode(self, hand):
         return self.is_suited(hand), math.prod(card.rank.value for card in hand)

@@ -1,26 +1,32 @@
 import pytest
-from phil.deck import Deck, SUITS_BIN, RANKS_PRM
+
+from phil.deck import RANKS_PRM, SUITS_BIN, Deck
 
 
 @pytest.fixture
 def deck():
     return Deck()
 
+
 def test_deck_length(deck):
     assert len(deck) == 52
     assert len(set(deck)) == 52
+
 
 @pytest.mark.parametrize("suit", SUITS_BIN)
 def test_deck_suits(deck, suit):
     assert sum(card.suit == suit for card in deck) == 13
 
+
 @pytest.mark.parametrize("rank", range(13))
 def test_deck_ranks(deck, rank):
     assert sum(card.rank == rank for card in deck) == 4
 
+
 @pytest.mark.parametrize("prime", RANKS_PRM)
 def test_deck_primes(deck, prime):
     assert sum(card.rank_prm == prime for card in deck) == 4
+
 
 @pytest.mark.parametrize("card", Deck())
 def test_card(card):
