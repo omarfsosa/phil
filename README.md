@@ -37,5 +37,5 @@ Also works with simple list of cards, or directly with the hand encoding:
 cards = hand.cards
 encoding = hand.encode()
 
-table.find(encoding) == table.find(cards) # True
+table[encoding] == table.find(cards) # True
 ```

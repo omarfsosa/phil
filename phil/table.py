@@ -1,9 +1,8 @@
 import itertools
 import math
 import operator
-from functools import reduce, singledispatchmethod
-
-from phil.deck import _SUIT_FACTOR, RANKS_PRM, Hand
+from functools import reduce
+from phil.deck import _SUIT_FACTOR, RANKS_PRM
 
 
 def _straights(suited=False):
@@ -166,22 +165,13 @@ class LookupTable:
     def __getitem__(self, index):
         return self._table[index]
 
-    @singledispatchmethod
-    def find(self, arg):
-        raise NotImplementedError("Cannot find a ")
-
-    @find.register
-    def _(self, hand: Hand):
-        code = hand.encode()
-        return self[code]
-
-    @find.register
-    def _(self, cards: list):
+    def find(self, cards):
+        combinations = itertools.combinations(cards, 5)
+        codes = (self.encode(comb) for comb in combinations)
+        return min(self[code] for code in codes)
+    
+    @staticmethod
+    def encode(cards):
         prime_product = math.prod(card.rank_prm for card in cards)
         suited = bool(reduce(operator.and_, cards) & 0xF000)
-        code = prime_product * (_SUIT_FACTOR if suited else 1)
-        return self[code]
-
-    @find.register
-    def _(self, code: int):
-        return self[code]
+        return prime_product * (_SUIT_FACTOR if suited else 1)
