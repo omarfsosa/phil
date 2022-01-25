@@ -116,7 +116,6 @@ class Hand:
 
     def __eq__(self, other):
         return set(self.cards) == set(other.cards)
-    
 
     def __iter__(self):
         return iter(self.cards)

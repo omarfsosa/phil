@@ -2,6 +2,7 @@ import itertools
 import math
 import operator
 from functools import reduce
+
 from phil.deck import _SUIT_FACTOR, RANKS_PRM
 
 
@@ -169,7 +170,7 @@ class LookupTable:
         combinations = itertools.combinations(cards, 5)
         codes = (self.encode(comb) for comb in combinations)
         return min(self[code] for code in codes)
-    
+
     @staticmethod
     def encode(cards):
         prime_product = math.prod(card.rank_prm for card in cards)
