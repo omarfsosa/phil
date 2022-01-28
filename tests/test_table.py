@@ -8,6 +8,7 @@ from phil.table import LookupTable
 def table():
     return LookupTable()
 
+
 def known_hands():
     return {
         "argnames": ("string", "ranking"),
@@ -32,7 +33,7 @@ def known_hands():
             "Two pair",
             "One pair",
             "High card",
-        ]
+        ],
     }
 
 
