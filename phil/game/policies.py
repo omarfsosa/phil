@@ -1,11 +1,15 @@
-def default_policy(player, context):
+def check_fold(player, context):
     """
     Fold or check regardless.
     """
     return 0
 
 
-def always_call_or_check(player, context):
+def call_any(player, context):
+    """
+    Call regardless of the bet size.
+    Check if there's nothing to call.
+    """
     delta = context.max_phase_bet - player._phase_bet
     return min(delta, player.chips)
 
