@@ -3,7 +3,7 @@ import math
 import operator
 from functools import reduce
 
-from phil.deck import _SUIT_FACTOR, RANKS_PRM
+from phil.deck import SUIT_FACTOR, RANKS_PRM
 
 
 def _straights(suited=False):
@@ -12,7 +12,7 @@ def _straights(suited=False):
     for n in range(10):
         cards = sorted_primes[n : n + 5]
         order = tuple(cards[::-1])
-        code = math.prod(cards) * (_SUIT_FACTOR if suited else 1)
+        code = math.prod(cards) * (SUIT_FACTOR if suited else 1)
         table[code] = order
 
     return sorted(table, key=table.get, reverse=True)
@@ -92,7 +92,7 @@ def _high_card(suited=False):
         if code in straights:
             continue
 
-        code *= _SUIT_FACTOR if suited else 1
+        code *= SUIT_FACTOR if suited else 1
         order = tuple(sorted(ks, reverse=True))
         table[code] = order
 
@@ -110,7 +110,7 @@ class NamedHand:
 
     @property
     def suited(self):
-        return not (self.codes[0] % _SUIT_FACTOR)
+        return not (self.codes[0] % SUIT_FACTOR)
 
     def index(self, value):
         return self.codes.index(value)
@@ -175,4 +175,4 @@ class LookupTable:
     def encode(cards):
         prime_product = math.prod(card.rank_prm for card in cards)
         suited = bool(reduce(operator.and_, cards) & 0xF000)
-        return prime_product * (_SUIT_FACTOR if suited else 1)
+        return prime_product * (SUIT_FACTOR if suited else 1)

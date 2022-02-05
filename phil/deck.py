@@ -18,7 +18,7 @@ RANKS_PRM = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41)
 SUITS_STR = "XCDXHXXXS"  # X: not used
 SUITS_BIN = (1, 2, 4, 8)
 SUITS_SYM = "X\u2667\u2662X\u2661XXX\u2664"  # unicode symbols, X not used.
-_SUIT_FACTOR = 43
+SUIT_FACTOR = 43
 
 
 class Card(int):
@@ -121,9 +121,17 @@ class Hand:
         return iter(self.cards)
 
     def encode(self):
-        prime_product = math.prod(card.rank_prm for card in self.cards)
-        return prime_product * (_SUIT_FACTOR if self.suited else 1)
+        return Hand._encode(self.cards)
 
     @property
     def suited(self):
-        return bool(reduce(operator.and_, self.cards) & 0xF000)
+        return Hand._suited(self.cards)
+
+    @staticmethod
+    def _encode(cards):
+        prime_product = math.prod(card.rank_prm for card in cards)
+        return prime_product * (SUIT_FACTOR if Hand._suited(cards) else 1)
+
+    @staticmethod
+    def _suited(cards):
+        return bool(reduce(operator.and_, cards) & 0xF000)
