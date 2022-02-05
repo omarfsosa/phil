@@ -3,7 +3,7 @@ import math
 import operator
 from functools import reduce
 
-from phil.deck import SUIT_FACTOR, RANKS_PRM
+from phil.deck import RANKS_PRM, SUIT_FACTOR
 
 
 def _straights(suited=False):
