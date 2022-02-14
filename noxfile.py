@@ -4,8 +4,8 @@ locations = "phil", "tests", "noxfile.py"
 nox.options.sessions = "lint", "tests"
 
 
-@nox.session
-def reformat(session):
+@nox.session(name="format")
+def format_(session):
     args = session.posargs or locations
     session.install("black", "isort")
     session.run("black", *args)
